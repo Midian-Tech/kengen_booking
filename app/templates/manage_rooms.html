@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Manage Rooms</h2>
+  <table class="table table-bordered mt-4">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Capacity</th>
+        <th>Status</th>
+        <th>Update</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for room in rooms %}
+      <tr>
+        <td>{{ room.name }}</td>
+        <td>{{ room.capacity }}</td>
+        <td>
+          <form method="POST" class="form-inline">
+            <input type="hidden" name="room_id" value="{{ room.id }}">
+            <select name="status" class="form-control form-control-sm">
+              <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
+              <option value="Booked" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+            </select>
+            <button class="btn btn-sm btn-success ml-2" type="submit">Update</button>
+          </form>
+        </td>
+        <td>{{ room.status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

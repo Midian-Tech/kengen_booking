@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Manage Equipment</h2>
+  <table class="table table-striped mt-4">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Available</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in equipment %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ 'Yes' if item.available else 'No' }}</td>
+        <td>
+          <form method="POST">
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+            <input type="checkbox" name="available" {% if item.available %}checked{% endif %}>
+            <button class="btn btn-sm btn-primary ml-2" type="submit">Update</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
