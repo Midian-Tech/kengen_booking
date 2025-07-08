@@ -1,38 +1,40 @@
 {% extends 'base.html' %}
+
+{% block title %}New Booking | KenGen{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-  <h2>Book a Room</h2>
-  <form method="POST" class="mt-4">
-    <div class="form-group">
-      <label for="room_id">Select Room</label>
-      <select name="room_id" id="room_id" class="form-control" required>
-        {% for room in rooms %}
+<h2 class="mb-4">Create a Booking</h2>
+
+<form method="POST" class="mt-4">
+  <div class="form-group mb-3">
+    <label for="room">Select Room</label>
+    <select name="room" id="room" class="form-control" required>
+      {% for room in rooms if room.status == 'Available' %}
         <option value="{{ room.id }}">{{ room.name }} (Capacity: {{ room.capacity }})</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Select Equipment</label><br>
-      {% for item in equipment %}
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" name="equipment" value="{{ item.id }}" id="eq{{ item.id }}">
-        <label class="form-check-label" for="eq{{ item.id }}">{{ item.name }}</label>
-      </div>
       {% endfor %}
-    </div>
+    </select>
+  </div>
 
-    <div class="form-group">
-      <label>Start Time</label>
-      <input type="datetime-local" name="start_time" class="form-control" required>
-    </div>
+  <div class="form-group mb-3">
+    <label for="equipment">Select Equipment</label>
+    <select name="equipment" id="equipment" class="form-control">
+      <option value="">-- None --</option>
+      {% for item in equipment if item.quantity > 0 %}
+        <option value="{{ item.id }}">{{ item.name }} (Available: {{ item.quantity }})</option>
+      {% endfor %}
+    </select>
+  </div>
 
-    <div class="form-group">
-      <label>End Time</label>
-      <input type="datetime-local" name="end_time" class="form-control" required>
-    </div>
+  <div class="form-group mb-3">
+    <label>Start Time</label>
+    <input type="datetime-local" name="start_time" class="form-control" required>
+  </div>
 
-    <button type="submit" class="btn btn-primary">Submit Booking</button>
-  </form>
-</div>
+  <div class="form-group mb-4">
+    <label>End Time</label>
+    <input type="datetime-local" name="end_time" class="form-control" required>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit Booking</button>
+</form>
 {% endblock %}

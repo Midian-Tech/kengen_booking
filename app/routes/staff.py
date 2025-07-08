@@ -1,6 +1,6 @@
 from flask import Blueprint, abort, flash, redirect, render_template, url_for
 from flask_login import login_required, current_user
-from app.models import Room, Equipment, Booking
+from app.models import Room, Equipment, Booking, db
 
 bp = Blueprint('staff', __name__, url_prefix='/staff')
 
@@ -16,10 +16,18 @@ def dashboard():
 @login_required
 def mark_returned(booking_id):
     booking = Booking.query.get_or_404(booking_id)
+
+    # Only the user who made the booking can mark it returned
     if booking.user_id != current_user.id:
         abort(403)
 
-    booking.returned = True
-    db.session.commit() # type: ignore
-    flash("Marked as returned. Awaiting admin verification.", "info")
-    return redirect(url_for('booking.view_bookings'))
+    if booking.status == 'Approved' and not booking.returned:
+        booking.status = 'Returned'
+        booking.returned = False  # Still pending admin verification
+        db.session.commit()
+        flash("Return submitted for admin verification.", "info")
+    else:
+        flash("This booking can't be marked as returned.", "warning")
+
+    return redirect(url_for('booking.dashboard'))  # or wherever the user is sent
+

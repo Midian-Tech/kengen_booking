@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Bookings</h2>
+<table>
+  <tr>
+    <th>ID</th><th>Room</th><th>Equipment</th><th>Status</th><th>Returned</th>
+  </tr>
+  {% for booking in bookings %}
+  <tr>
+    <td>{{ booking.id }}</td>
+    <td>{{ booking.room.name if booking.room else '—' }}</td>
+    <td>{{ booking.equipment.name if booking.equipment else '—' }}</td>
+    <td>{{ booking.status }}</td>
+    <td>{{ 'Yes' if booking.returned else 'No' }}</td>
+    {% if booking.status == 'Approved' and not booking.returned %}
+    <td><a href="{{ url_for('booking.return_booking', booking_id=booking.id) }}">Mark Returned</a></td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

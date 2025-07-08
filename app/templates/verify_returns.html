@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Verify Returns{% endblock %}
+
+{% block content %}
+<h2><b>UNRETURNED</b></h2>
+
+{% if bookings %}
+  <ul class="list-group">
+    {% for booking in bookings %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+  <strong>
+    {% if booking.room and booking.equipment %}
+      {{ booking.room.name }} & {{ booking.equipment.name }}
+    {% elif booking.room %}
+      {{ booking.room.name }}
+    {% elif booking.equipment %}
+      {{ booking.equipment.name }}
+    {% else %}
+      No Room or Equipment
+    {% endif %}
+  </strong><br>
+  {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}
+</div>
+
+        <form method="POST" action="{{ url_for('admin.mark_returned', booking_id=booking.id) }}">
+          <button type="submit" class="btn btn-sm btn-success">Mark as Returned</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No unreturned bookings found.</p>
+{% endif %}
+{% endblock %}

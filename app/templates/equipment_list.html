@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Available Equipment</h2>
+  <p class="text-muted">Below is a list of equipment available for booking.</p>
+
+  <table class="table table-hover mt-3">
+    <thead class="thead-light">
+      <tr>
+        <th>Name</th>
+        <th>Quantity</th>
+        <th>Available</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in equipment %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ 'Yes' if item.available else 'No' }}</td>
+          <td>{{ item.status or 'N/A' }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4" class="text-center">No equipment found.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
