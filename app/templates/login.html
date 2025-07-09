@@ -1,18 +1,52 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Login</h2>
-<form method="POST">
-  <div class="mb-3">
-   <label for="email">Email address</label>
-    <input type="email" class="form-control" id="email" name="email" required>
-  
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Password</label>
-    <input type="password" name="password" class="form-control" required>
-  </div>
-  <button type="submit" class="btn btn-primary">Login</button>
-</form>
-<p class="mt-2">Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>.</p>
+<div class="container mt-5" style="max-width: 500px;">
+  <div class="card shadow">
+    <div class="card-body">
+      <h3 class="card-title mb-4 text-center">Login to Your Account</h3>
 
+      <form method="POST">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email Address</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" name="password" placeholder="Your Password" required>
+            <button type="button" class="btn btn-outline-secondary" id="togglePassword" tabindex="-1">
+              <i class="bi bi-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+      </form>
+
+      <p class="mt-4 text-center">
+        Don't have an account?
+        <a href="{{ url_for('auth.register') }}">Register here</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Password toggle script -->
+<script>
+  const togglePassword = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  const toggleIcon = document.getElementById('toggleIcon');
+
+  togglePassword.addEventListener('click', function () {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    toggleIcon.classList.toggle('bi-eye');
+    toggleIcon.classList.toggle('bi-eye-slash');
+  });
+</script>
 {% endblock %}

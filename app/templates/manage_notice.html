@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h3>Write a notice</h3>
+  <form method="POST">
+    <div class="form-group">
+      <label for="notice">Notice Message</label>
+      <textarea class="form-control" id="notice" name="notice" rows="4">{{ notice.message if notice else '' }}</textarea>
+    </div>
+    <button class="btn btn-primary mt-2">Update Notice</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
 from flask import Blueprint, flash, redirect, render_template, abort, request, url_for
 from flask_login import login_required, current_user
-from app.models import Room, Equipment, Booking
+from sqlalchemy import func
+from app.models import Notice, Room, Equipment, Booking
 from app import db
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -94,20 +96,35 @@ def delete_equipment(id):
 @bp.route('/manage-rooms', methods=['GET', 'POST'])
 @login_required
 def manage_rooms():
-    if current_user.role != 'admin':
-        abort(403)
+    if request.method == 'POST':
+        action = request.form.get('action')
+        room_id = request.form.get('room_id')
+
+        if action == 'add':
+            name = request.form.get('name')
+            capacity = request.form.get('capacity')
+            new_room = Room(name=name, capacity=capacity, status='Available')
+            db.session.add(new_room)
+            db.session.commit()
+            flash("Room added successfully", "success")
+
+        elif action == 'update':
+            room = Room.query.get(room_id)
+            if room:
+                room.name = request.form.get('name')
+                room.capacity = request.form.get('capacity')
+                room.status = request.form.get('status')
+                db.session.commit()
+                flash("Room updated successfully", "info")
+
+        elif action == 'delete':
+            room = Room.query.get(room_id)
+            if room:
+                db.session.delete(room)
+                db.session.commit()
+                flash("Room deleted successfully", "danger")
 
     rooms = Room.query.all()
-
-    if request.method == 'POST':
-        room_id = request.form['room_id']
-        status = request.form['status']
-        room = Room.query.get_or_404(room_id)
-        room.status = status
-        db.session.commit()
-        flash("Room status updated.", "success")
-        return redirect(url_for('admin.manage_rooms'))
-
     return render_template('manage_rooms.html', rooms=rooms)
 
 
@@ -143,19 +160,31 @@ def approve_bookings():
 @bp.route('/reports')
 @login_required
 def reports():
-    if current_user.role != 'admin':
-        abort(403)
+    total = Booking.query.count()
 
-    bookings = Booking.query.all()
-    rooms = Room.query.all()
+    # Room stats
+    room_stats = (
+        db.session.query(Room.name, func.count(Booking.id))
+        .join(Booking)
+        .group_by(Room.name)
+        .all()
+    )
+    room_stats = dict(room_stats)
 
-    room_stats = {room.name: 0 for room in rooms}
-    for b in bookings:
-        if b.room:
-            room_stats[b.room.name] += 1
+    # Equipment stats
+    equipment_stats = (
+        db.session.query(Equipment.name, func.count(Booking.id))
+        .join(Booking)
+        .group_by(Equipment.name)
+        .all()
+    )
+    equipment_stats = dict(equipment_stats)
 
-    total_bookings = len(bookings)
-    return render_template('admin/reports.html', total=total_bookings, room_stats=room_stats)
+    return render_template('reports.html',
+                           total=total,
+                           room_stats=room_stats,
+                           equipment_stats=equipment_stats)
+
 @bp.route('/unreturned')
 @login_required
 def unreturned_bookings():
@@ -189,3 +218,39 @@ def mark_returned(booking_id):
         flash("Invalid return marking.", "warning")
 
     return redirect(url_for('admin.unreturned_bookings'))
+@bp.route('/notice', methods=['GET', 'POST'])
+@login_required
+def manage_notice():
+    if current_user.role != 'admin':
+        abort(403)
+
+    latest_notice = Notice.query.order_by(Notice.created_at.desc()).first()
+
+    if request.method == 'POST':
+        new_notice = request.form.get('notice')
+        if new_notice:
+            db.session.add(Notice(message=new_notice))
+            db.session.commit()
+            flash("Notice updated!", "success")
+            return redirect(url_for('admin.manage_notice'))
+
+    return render_template('manage_notice.html', notice=latest_notice)
+@bp.route('/bookings')
+@login_required
+def all_bookings():
+    search_id = request.args.get('search_id', type=int)
+    this_week = request.args.get('this_week') == '1'
+
+    query = Booking.query
+
+    if search_id:
+        query = query.filter(Booking.id == search_id)
+
+    if this_week:
+        today = datetime.now()
+        start_week = today - timedelta(days=today.weekday())  # Monday
+        end_week = start_week + timedelta(days=6, hours=23, minutes=59, seconds=59)
+        query = query.filter(Booking.start_time >= start_week, Booking.start_time <= end_week)
+
+    bookings = query.order_by(Booking.start_time.desc()).all()
+    return render_template('admin/all_bookings.html', bookings=bookings)

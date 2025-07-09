@@ -2,34 +2,61 @@
 {% block content %}
 <div class="container mt-5">
   <h2>Manage Rooms</h2>
+
+  <!-- Room List with Edit/Delete -->
   <table class="table table-bordered mt-4">
     <thead>
       <tr>
         <th>Name</th>
         <th>Capacity</th>
         <th>Status</th>
-        <th>Update</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for room in rooms %}
       <tr>
-        <td>{{ room.name }}</td>
-        <td>{{ room.capacity }}</td>
-        <td>
-          <form method="POST" class="form-inline">
-            <input type="hidden" name="room_id" value="{{ room.id }}">
+        <form method="POST" action="{{ url_for('admin.manage_rooms') }}">
+          <input type="hidden" name="room_id" value="{{ room.id }}">
+          <td>
+            <input type="text" name="name" value="{{ room.name }}" class="form-control form-control-sm" required>
+          </td>
+          <td>
+            <input type="number" name="capacity" value="{{ room.capacity }}" class="form-control form-control-sm" required>
+          </td>
+          <td>
             <select name="status" class="form-control form-control-sm">
-              <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
-              <option value="Booked" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+              <option value="Available" {% if room.status == 'Available' %}selected{% endif %}>Available</option>
+              <option value="Booked" {% if room.status == 'Booked' %}selected{% endif %}>Booked</option>
             </select>
-            <button class="btn btn-sm btn-success ml-2" type="submit">Update</button>
-          </form>
-        </td>
-        <td>{{ room.status }}</td>
+          </td>
+          <td class="d-flex gap-1">
+            <button type="submit" name="action" value="update" class="btn btn-sm btn-success">Save</button>
+            <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');">Delete</button>
+          </td>
+        </form>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+
+  <!-- Add New Room -->
+  <div class="card mt-5">
+    <div class="card-header">Add New Room</div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.manage_rooms') }}">
+        <div class="mb-3">
+          <label for="name" class="form-label">Room Name</label>
+          <input type="text" class="form-control" name="name" required>
+        </div>
+        <div class="mb-3">
+          <label for="capacity" class="form-label">Capacity</label>
+          <input type="number" class="form-control" name="capacity" min="1" required>
+        </div>
+        <input type="hidden" name="action" value="add">
+        <button type="submit" class="btn btn-primary">Add Room</button>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

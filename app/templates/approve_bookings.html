@@ -1,24 +1,50 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<h2>Approve Bookings</h2>
-<table>
-  <tr>
-    <th>ID</th><th>User</th><th>Room</th><th>Equipment</th><th>Status</th><th>Action</th>
-  </tr>
-  {% for booking in bookings %}
-  <tr>
-    <td>{{ booking.id }}</td>
-    <td>{{ booking.user.username }}</td>
-    <td>{{ booking.room.name if booking.room else '—' }}</td>
-    <td>{{ booking.equipment.name if booking.equipment else '—' }}</td>
-    <td>{{ booking.status }}</td>
-    <td>
-      {% if booking.status == 'Pending' %}
-        <a href="{{ url_for('booking.approve_booking', booking_id=booking.id) }}">Approve</a>
-        <a href="{{ url_for('booking.reject_booking', booking_id=booking.id) }}">Reject</a>
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
+<div class="container mt-4">
+  <h2 class="mb-4">Approve Bookings</h2>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped table-hover align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Room</th>
+          <th>Equipment</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+        <tr>
+          <td>{{ booking.id }}</td>
+          <td>{{ booking.user.name if booking.user else '—' }}</td>
+          <td>{{ booking.room.name if booking.room else '—' }}</td>
+          <td>{{ booking.equipment.name if booking.equipment else '—' }}</td>
+          <td>
+            <span class="badge 
+              {% if booking.status == 'Pending' %} bg-warning 
+              {% elif booking.status == 'Approved' %} bg-success 
+              {% elif booking.status == 'Rejected' %} bg-danger 
+              {% else %} bg-secondary 
+              {% endif %}">
+              {{ booking.status }}
+            </span>
+          </td>
+          <td>
+            {% if booking.status == 'Pending' %}
+              <a href="{{ url_for('booking.approve_booking', booking_id=booking.id) }}" class="btn btn-sm btn-success me-1">Approve</a>
+              <a href="{{ url_for('booking.reject_booking', booking_id=booking.id) }}" class="btn btn-sm btn-danger">Reject</a>
+            {% else %}
+              <span class="text-muted">No action</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

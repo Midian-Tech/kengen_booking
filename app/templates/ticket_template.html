@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Booking Ticket</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; }
+    .ticket {
+      border: 2px dashed #333;
+      padding: 30px;
+      max-width: 600px;
+      margin: auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo {
+      height: 60px;
+    }
+    .details {
+      margin-top: 20px;
+    }
+    .qr {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .qr img {
+      height: 150px;
+    }
+    .label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="ticket">
+    <div class="header">
+      <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
+      <h2>Booking Confirmation</h2>
+    </div>
+
+    <div class="details">
+      <p><span class="label">Name:</span> {{ booking.user.name }}</p>
+      <p><span class="label">Room:</span> {{ booking.room.name if booking.room else '—' }}</p>
+      <p><span class="label">Equipment:</span> {{ booking.equipment.name if booking.equipment else '—' }}</p>
+      <p><span class="label">Start:</span> {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+      <p><span class="label">End:</span> {{ booking.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
+      <p><span class="label">Status:</span> {{ booking.status }}</p>
+      <p><span class="label">Ticket Code:</span> {{ ticket_code }}</p>
+    </div>
+
+    <div class="qr">
+      <img src="data:image/png;base64,{{ qr_image }}" alt="QR Code">
+      <p>Scan to verify</p>
+    </div>
+  </div>
+</body>
+</html>

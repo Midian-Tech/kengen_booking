@@ -9,19 +9,22 @@
     {% for booking in bookings %}
       <li class="list-group-item d-flex justify-content-between align-items-center">
         <div>
-  <strong>
-    {% if booking.room and booking.equipment %}
-      {{ booking.room.name }} & {{ booking.equipment.name }}
-    {% elif booking.room %}
-      {{ booking.room.name }}
-    {% elif booking.equipment %}
-      {{ booking.equipment.name }}
-    {% else %}
-      No Room or Equipment
-    {% endif %}
-  </strong><br>
-  {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}
-</div>
+          <strong>
+            {% if booking.room and booking.equipment %}
+              {{ booking.room.name }} & {{ booking.equipment.name }}
+            {% elif booking.room %}
+              {{ booking.room.name }}
+            {% elif booking.equipment %}
+              {{ booking.equipment.name }}
+            {% else %}
+              No Room or Equipment
+            {% endif %}
+          </strong><br>
+          <small>
+            <b>By:</b> {{ booking.user.name if booking.user else 'Unknown User' }}<br>
+            <b>Time:</b> {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}
+          </small>
+        </div>
 
         <form method="POST" action="{{ url_for('admin.mark_returned', booking_id=booking.id) }}">
           <button type="submit" class="btn btn-sm btn-success">Mark as Returned</button>

@@ -5,10 +5,11 @@
 {% block content %}
 <h2 class="mb-4">Create a Booking</h2>
 
-<form method="POST" class="mt-4">
+<form method="POST" class="mt-4" onsubmit="return validateBookingForm();">
   <div class="form-group mb-3">
     <label for="room">Select Room</label>
-    <select name="room" id="room" class="form-control" required>
+    <select name="room" id="room" class="form-control">
+      <option value="">-- None --</option>
       {% for room in rooms if room.status == 'Available' %}
         <option value="{{ room.id }}">{{ room.name }} (Capacity: {{ room.capacity }})</option>
       {% endfor %}
@@ -35,6 +36,26 @@
     <input type="datetime-local" name="end_time" class="form-control" required>
   </div>
 
+  <div class="text-danger mb-3" id="formError" style="display: none;">
+    Please select at least a Room or Equipment.
+  </div>
+
   <button type="submit" class="btn btn-primary">Submit Booking</button>
 </form>
+
+<script>
+  function validateBookingForm() {
+    const room = document.getElementById('room').value;
+    const equipment = document.getElementById('equipment').value;
+    const errorMsg = document.getElementById('formError');
+
+    if (!room && !equipment) {
+      errorMsg.style.display = 'block';
+      return false;
+    }
+
+    errorMsg.style.display = 'none';
+    return true;
+  }
+</script>
 {% endblock %}

@@ -1,7 +1,7 @@
 # app/__init__.py
 from flask import Flask, redirect, url_for
 from config import Config
-from app.extensions import db, login_manager
+from app.extensions import db, login_manager, mail  # ⬅️ include mail
 
 def create_app():
     app = Flask(__name__)
@@ -9,6 +9,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    mail.init_app(app)  # ⬅️ initialize Flask-Mail
 
     from app.routes import auth, admin, staff, booking
     from app.routes.equipment import equipment as equipment_bp
