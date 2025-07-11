@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2 class="my-4">My Bookings</h2>
+<h2 class="my-4">My Conference Bookings</h2>
+
 <form method="get" class="mb-3">
   <div class="input-group">
     <input type="number" name="booking_id" class="form-control" placeholder="Search by Booking ID" value="{{ request.args.get('booking_id', '') }}">
@@ -14,10 +15,12 @@
     <thead class="table-dark">
       <tr>
         <th>ID</th>
-        <th>Room</th>
+        <th>Function</th>
+        <th>Venue</th>
         <th>Equipment</th>
+        <th>Date From</th>
+        <th>Date To</th>
         <th>Status</th>
-        <th>Returned</th>
         <th>Details</th>
         <th>Ticket</th>
       </tr>
@@ -26,8 +29,11 @@
       {% for booking in bookings %}
       <tr>
         <td>{{ booking.id }}</td>
+        <td>{{ booking.function or '—' }}</td>
         <td>{{ booking.room.name if booking.room else '—' }}</td>
         <td>{{ booking.equipment.name if booking.equipment else '—' }}</td>
+        <td>{{ booking.date_from.strftime('%Y-%m-%d') if booking.date_from else '—' }}</td>
+        <td>{{ booking.date_to.strftime('%Y-%m-%d') if booking.date_to else '—' }}</td>
         <td>
           <span class="badge 
             {% if booking.status == 'Approved' %}bg-success
@@ -37,45 +43,68 @@
           </span>
         </td>
         <td>
-          {% if booking.returned %}
-            <span class="text-success">Yes</span>
-          {% else %}
-            <span class="text-danger">No</span>
-          {% endif %}
-        </td>
-        <td>
           <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal{{ booking.id }}">
             Details
           </button>
         </td>
         <td>
           {% if booking.status == 'Approved' %}
-            <a href="{{ url_for('booking.generate_ticket', booking_id=booking.id) }}" class="btn btn-sm btn-outline-success">
-              Download
-            </a>
+            <a href="{{ url_for('booking.print_ticket', booking_id=booking.id) }}" class="btn btn-sm btn-outline-success">download
+              
+
           {% else %}
             —
           {% endif %}
         </td>
       </tr>
 
-      <!-- Modal for each booking -->
+      <!-- Modal -->
       <div class="modal fade" id="detailsModal{{ booking.id }}" tabindex="-1" aria-labelledby="detailsModalLabel{{ booking.id }}" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="detailsModalLabel{{ booking.id }}">Booking Details - #{{ booking.id }}</h5>
+              <h5 class="modal-title" id="detailsModalLabel{{ booking.id }}">Conference Booking Details - #{{ booking.id }}</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body">
-              <p><strong>Room:</strong> {{ booking.room.name if booking.room else '—' }}</p>
+              <h6>Booking Details</h6>
+              <p><strong>Function:</strong> {{ booking.function or '—' }}</p>
+              <p><strong>Date From:</strong> {{ booking.date_from.strftime('%Y-%m-%d') if booking.date_from else '—' }}</p>
+              <p><strong>Date To:</strong> {{ booking.date_to.strftime('%Y-%m-%d') if booking.date_to else '—' }}</p>
+              <p><strong>Pax:</strong> {{ booking.pax or '—' }}</p>
+              <p><strong>Meals:</strong> {{ booking.meals or '—' }}</p>
+              <p><strong>Venue:</strong> {{ booking.room.name if booking.room else '—' }}</p>
               <p><strong>Equipment:</strong> {{ booking.equipment.name if booking.equipment else '—' }}</p>
-              <p><strong>Status:</strong> {{ booking.status }}</p>
+
+              <hr>
+              <h6>Account to Charge</h6>
+              <p><strong>Cost Centre:</strong> {{ booking.cost_centre or '—' }}</p>
+              <p><strong>Account to Charge:</strong> {{ booking.account_to_charge or '—' }}</p>
+              <p><strong>Internal Order:</strong> {{ booking.internal_order or '—' }}</p>
+              <p><strong>Network:</strong> {{ booking.network or '—' }}</p>
+
+              <hr>
+              <h6>Approval</h6>
+              <p><strong>Approver:</strong> {{ booking.approver or '—' }}</p>
+              <p><strong>Designation:</strong> {{ booking.designation or '—' }}</p>
+              <p><strong>Area:</strong> {{ booking.area or '—' }}</p>
+              <p><strong>Approval Date:</strong> {{ booking.approval_date.strftime('%Y-%m-%d') if booking.approval_date else '—' }}</p>
+
+              <hr>
+              <h6>Status</h6>
+              <p><strong>Status:</strong> {{ booking.status or '—' }}</p>
               <p><strong>Returned:</strong> {{ 'Yes' if booking.returned else 'No' }}</p>
-              <p><strong>Start Time:</strong> {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
-              <p><strong>End Time:</strong> {{ booking.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
-              <p><strong>Created At:</strong> {{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else 'N/A' }}</p>
+              <p><strong>Is Approved:</strong> {{ 'Yes' if booking.is_approved else 'No' }}</p>
+              <p><strong>Created At:</strong> {{ booking.created_at.strftime('%Y-%m-%d') if booking.created_at else '—' }}</p>
+
+              {% if booking.signature_filename %}
+              <hr>
+              <h6>Signature</h6>
+              <img src="{{ url_for('static', filename='uploads/signatures/' ~ booking.signature_filename) }}" alt="Signature" class="img-fluid" style="max-height: 150px;">
+              {% endif %}
             </div>
+
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>

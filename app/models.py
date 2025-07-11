@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from datetime import datetime
-from app.extensions import db  # ✅ Assumes SQLAlchemy is initialized here
+from app.extensions import db
 
 
 class User(UserMixin, db.Model):
@@ -13,8 +13,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # 'admin' or 'staff'
 
-    # Reverse relationship (optional, already established via backref)
-    # bookings = db.relationship('Booking', back_populates='user')
+    # ✅ Remove redundant relationship declaration
+    # bookings = db.relationship('ConferenceBooking', backref='user', lazy=True)  ❌ REMOVE
 
 
 class Room(db.Model):
@@ -38,27 +38,42 @@ class Equipment(db.Model):
         return f"<Equipment {self.name}>"
 
 
-class Booking(db.Model):
-    __tablename__ = 'booking'
+class ConferenceBooking(db.Model):
+    __tablename__ = 'conference_booking'
 
     id = db.Column(db.Integer, primary_key=True)
 
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    function = db.Column(db.String(255))
+    date_from = db.Column(db.DateTime)
+    date_to = db.Column(db.DateTime)
+    pax = db.Column(db.Integer)
+    meals = db.Column(db.String(255))
+    cost_centre = db.Column(db.String(100))
+    account_to_charge = db.Column(db.String(100))
+    internal_order = db.Column(db.String(100))
+    network = db.Column(db.String(100))
+    approver = db.Column(db.String(100))
+    designation = db.Column(db.String(100))
+    area = db.Column(db.String(100))
+    approval_date = db.Column(db.DateTime)
+    status = db.Column(db.String(50), default='Pending')
+    returned = db.Column(db.Boolean, default=False)
+    is_approved = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Foreign Keys
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    approver_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # ✅ New FK for approver
     room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=True)
     equipment_id = db.Column(db.Integer, db.ForeignKey('equipment.id'), nullable=True)
 
-    start_time = db.Column(db.DateTime, nullable=False)
-    end_time = db.Column(db.DateTime, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    status = db.Column(db.String(20), default='Pending')  # e.g. 'Pending', 'Approved', etc.
-    returned = db.Column(db.Boolean, default=False)
-    user_signed = db.Column(db.Boolean, default=False)
-
     # Relationships
-    user = db.relationship('User', backref=db.backref('bookings', lazy=True))
-    room = db.relationship('Room', backref=db.backref('bookings', lazy=True))
-    equipment = db.relationship('Equipment', backref=db.backref('bookings', lazy=True))
+    user = db.relationship('User', foreign_keys=[user_id], backref='bookings_made')  # ✅ Explicit FK
+    approver_user = db.relationship('User', foreign_keys=[approver_id], backref='bookings_to_approve')  # ✅ Explicit FK
+    room = db.relationship('Room', backref='bookings')
+    equipment = db.relationship('Equipment', backref='bookings')
+    approver_user = db.relationship('User', foreign_keys=[approver_id])
+
 
 
 class Notice(db.Model):

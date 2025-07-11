@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Pending Bookings - KenGen ER{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2 class="mb-4">Pending Bookings</h2>
+
+  {% if bookings %}
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Room</th>
+            <th>Booked By</th>
+            <th>Date From</th>
+            <th>Date To</th>
+            <th>Purpose</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+          <tr>
+            <td>{{ booking.id }}</td>
+            <td>{{ booking.room.name if booking.room else 'N/A' }}</td>
+            <td>{{ booking.user.name if booking.user else 'N/A' }}</td>
+            <td>{{ booking.date_from.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ booking.date_to.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ booking.purpose }}</td>
+            <td class="d-flex gap-1">
+              <form method="POST" action="{{ url_for('admin.approve_booking', booking_id=booking.id) }}">
+                <button type="submit" class="btn btn-success btn-sm">
+                  <i class="bi bi-check2-circle"></i> Approve
+                </button>
+              </form>
+
+              <form method="POST" action="{{ url_for('admin.reject_booking', booking_id=booking.id) }}">
+                <button type="submit" class="btn btn-danger btn-sm">
+                  <i class="bi bi-x-circle"></i> Reject
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">No pending bookings at the moment.</div>
+  {% endif %}
+</div>
+{% endblock %}

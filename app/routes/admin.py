@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, flash, redirect, render_template, abort, request, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from app.models import Notice, Room, Equipment, Booking
+from app.models import ConferenceBooking, Notice, Room, Equipment
 from app import db
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -14,8 +14,8 @@ def dashboard():
     if current_user.role != 'admin':
         abort(403)
 
-    bookings = Booking.query.all()
-    pending_bookings = Booking.query.filter_by(status='Pending').order_by(Booking.start_time).all()
+    bookings = ConferenceBooking.query.all()
+    pending_bookings = ConferenceBooking.query.filter_by(status='Pending').order_by(ConferenceBooking.date_from).all()
     rooms = Room.query.all()
     equipment = Equipment.query.all()
 
@@ -24,19 +24,20 @@ def dashboard():
     booking_counts = []
 
     for room in rooms:
-        count = Booking.query.filter_by(room_id=room.id).count()
+        count = ConferenceBooking.query.filter_by(room_id=room.id).count()
         room_labels.append(room.name)
         booking_counts.append(count)
 
     return render_template(
         'dashboard.html',
         bookings=bookings,
-        pending_bookings=pending_bookings,  # <-- now passed
+        pending_bookings=pending_bookings,
         rooms=rooms,
         equipment=equipment,
         room_labels=room_labels,
         booking_counts=booking_counts
     )
+
 
 @bp.route('/manage-equipment', methods=['GET', 'POST'])
 @login_required
@@ -127,54 +128,58 @@ def manage_rooms():
     rooms = Room.query.all()
     return render_template('manage_rooms.html', rooms=rooms)
 
-
-@bp.route('/approve-bookings', methods=['GET', 'POST'])
+@bp.route('/approve/<int:booking_id>', methods=['POST'])
 @login_required
-def approve_bookings():
+def approve_booking(booking_id):
     if current_user.role != 'admin':
         abort(403)
 
-    pending = Booking.query.filter_by(status='Pending').all()
+    booking = ConferenceBooking.query.get_or_404(booking_id)
 
-    if request.method == 'POST':
-        booking_id = request.form['booking_id']
-        action = request.form['action']
-        booking = Booking.query.get_or_404(booking_id)
+    if booking.status != 'Pending':
+        flash('Booking is not pending approval.', 'warning')
+        return redirect(url_for('admin.pending_bookings'))
 
-        if action == 'approve':
-          booking.status = 'Approved'
-          booking.returned = False  # Means: still ongoing, not yet returned
+    # Room approval logic
+    if booking.room:
+        if booking.room.status == 'Unavailable':
+            flash(f"Cannot approve booking: Room '{booking.room.name}' is currently unavailable.", 'danger')
+            return redirect(url_for('admin.pending_bookings'))
+        else:
+            booking.room.status = 'Unavailable'
 
-        elif action == 'reject':
-            booking.status = 'Rejected'
-        db.session.commit()
-        flash(f"Booking has been {booking.status.lower()}.", "info")
-        return redirect(url_for('admin.approve_bookings'))
+    # Equipment approval logic
+    elif booking.equipment:
+        if booking.equipment.quantity < 1:
+            flash(f"Cannot approve booking: Equipment '{booking.equipment.name}' is out of stock.", 'danger')
+            return redirect(url_for('admin.pending_bookings'))
+        else:
+            booking.equipment.quantity -= 1
 
-    return render_template('approve_bookings.html', bookings=pending)
+    booking.status = 'Approved'
+    booking.approver_id = current_user.id
+    booking.approval_date = datetime.utcnow()
 
-
-
-
+    db.session.commit()
+    flash(f'Booking #{booking.id} approved and resources updated.', 'success')
+    return redirect(url_for('admin.pending_bookings'))
 
 @bp.route('/reports')
 @login_required
 def reports():
-    total = Booking.query.count()
+    total = ConferenceBooking.query.count()
 
-    # Room stats
     room_stats = (
-        db.session.query(Room.name, func.count(Booking.id))
-        .join(Booking)
+        db.session.query(Room.name, func.count(ConferenceBooking.id))
+        .join(ConferenceBooking)
         .group_by(Room.name)
         .all()
     )
     room_stats = dict(room_stats)
 
-    # Equipment stats
     equipment_stats = (
-        db.session.query(Equipment.name, func.count(Booking.id))
-        .join(Booking)
+        db.session.query(Equipment.name, func.count(ConferenceBooking.id))
+        .join(ConferenceBooking)
         .group_by(Equipment.name)
         .all()
     )
@@ -185,22 +190,24 @@ def reports():
                            room_stats=room_stats,
                            equipment_stats=equipment_stats)
 
+
 @bp.route('/unreturned')
 @login_required
 def unreturned_bookings():
     if current_user.role != 'admin':
         abort(403)
 
-    # Get all approved but not yet returned
-    unreturned = Booking.query.filter_by(status='Approved', returned=False).all()
+    unreturned = ConferenceBooking.query.filter_by(status='Approved', returned=False).all()
     return render_template('verify_returns.html', bookings=unreturned)
+
+
 @bp.route('/mark_returned/<int:booking_id>', methods=['POST'])
 @login_required
 def mark_returned(booking_id):
     if current_user.role != 'admin':
         abort(403)
 
-    booking = Booking.query.get_or_404(booking_id)
+    booking = ConferenceBooking.query.get_or_404(booking_id)
 
     if booking.status == 'Approved' and not booking.returned:
         booking.returned = True
@@ -210,7 +217,7 @@ def mark_returned(booking_id):
             booking.room.status = 'Available'
 
         if booking.equipment:
-            booking.equipment.quantity += 1  # Or set to "Available"
+            booking.equipment.quantity += 1
 
         db.session.commit()
         flash("Booking marked as returned and resources updated.", "success")
@@ -218,6 +225,8 @@ def mark_returned(booking_id):
         flash("Invalid return marking.", "warning")
 
     return redirect(url_for('admin.unreturned_bookings'))
+
+
 @bp.route('/notice', methods=['GET', 'POST'])
 @login_required
 def manage_notice():
@@ -235,22 +244,57 @@ def manage_notice():
             return redirect(url_for('admin.manage_notice'))
 
     return render_template('manage_notice.html', notice=latest_notice)
+
+
 @bp.route('/bookings')
 @login_required
 def all_bookings():
     search_id = request.args.get('search_id', type=int)
     this_week = request.args.get('this_week') == '1'
 
-    query = Booking.query
+    query = ConferenceBooking.query
 
     if search_id:
-        query = query.filter(Booking.id == search_id)
+        query = query.filter(ConferenceBooking.id == search_id)
 
     if this_week:
         today = datetime.now()
-        start_week = today - timedelta(days=today.weekday())  # Monday
+        start_week = today - timedelta(days=today.weekday())
         end_week = start_week + timedelta(days=6, hours=23, minutes=59, seconds=59)
-        query = query.filter(Booking.start_time >= start_week, Booking.start_time <= end_week)
+        query = query.filter(ConferenceBooking.date_from >= start_week, ConferenceBooking.date_from <= end_week)
 
-    bookings = query.order_by(Booking.start_time.desc()).all()
+    bookings = query.order_by(ConferenceBooking.date_from.desc()).all()
     return render_template('admin/all_bookings.html', bookings=bookings)
+@bp.route('/pending-bookings')
+@login_required
+def pending_bookings():
+    if current_user.role != 'admin':
+        abort(403)
+    bookings = ConferenceBooking.query.filter_by(status='Pending').order_by(ConferenceBooking.date_from).all()
+    return render_template('admin/pending_bookings.html', bookings=bookings)
+@bp.route('/reject/<int:booking_id>', methods=['POST'])
+@login_required
+def reject_booking(booking_id):
+    booking = ConferenceBooking.query.get_or_404(booking_id)
+
+    # ✅ Ensure only the assigned approver (admin) can reject
+    if current_user.role != 'admin' or booking.approver_id != current_user.id:
+        abort(403)
+
+    booking.status = 'Rejected'
+    db.session.commit()
+
+    flash(f'Booking #{booking.id} has been rejected.', 'danger')
+    return redirect(url_for('admin.pending_bookings'))
+@bp.route('/history')
+@login_required
+def history():
+    if current_user.role != 'admin':
+        abort(403)
+
+    bookings = ConferenceBooking.query \
+        .filter(ConferenceBooking.status == 'Approved') \
+        .order_by(ConferenceBooking.approval_date.desc()) \
+        .all()
+
+    return render_template('admin/history.html', bookings=bookings)

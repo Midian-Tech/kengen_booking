@@ -22,7 +22,7 @@
           </strong><br>
           <small>
             <b>By:</b> {{ booking.user.name if booking.user else 'Unknown User' }}<br>
-            <b>Time:</b> {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}
+            <b>Time:</b> {{ booking.date_from.strftime('%Y-%m-%d %H:%M') }} - {{ booking.date_to.strftime('%H:%M') }}
           </small>
         </div>
 

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Approval History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4 text-primary">Approval History</h2>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped table-hover align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Booking ID</th>
+          <th>Function</th>
+          <th>Approved By</th>
+          <th>Date Approved</th>
+          <th>Room</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+          <tr>
+            <td>{{ booking.id }}</td>
+            <td>{{ booking.function }}</td>
+            <td>{{ booking.approver_user.name if booking.approver_user else 'N/A' }}</td>
+            <td>{{ booking.approval_date.strftime('%Y-%m-%d %H:%M') if booking.approval_date else 'N/A' }}</td>
+            <td>{{ booking.room.name if booking.room else 'N/A' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

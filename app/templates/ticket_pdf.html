@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial; }
+    .logo { width: 100px; }
+    .qr { float: right; width: 100px; }
+    .section { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <img src="{{ url_for('static', filename='images/kengen_logo.png') }}" class="logo">
+  <h2>Conference Booking Ticket</h2>
+  <hr>
+
+  <div class="section">
+    <strong>Function/Meeting:</strong> {{ booking.function }}<br>
+    <strong>Dates:</strong> {{ booking.date_from }} to {{ booking.date_to }}<br>
+    <strong>No. of Pax:</strong> {{ booking.pax }}<br>
+    <strong>Venue:</strong> {{ booking.room.name }}
+  </div>
+
+  <div class="section">
+    <strong>Meals:</strong> {{ booking.meals }}
+  </div>
+
+  <div class="section">
+    <strong>Cost Centre:</strong> {{ booking.cost_centre }}<br>
+    <strong>Account:</strong> {{ booking.account_to_charge }}<br>
+    <strong>Internal Order:</strong> {{ booking.internal_order }}<br>
+    <strong>Network:</strong> {{ booking.network }}
+  </div>
+
+ <div class="section">
+  <strong>Approved By:</strong> {{ booking.approver_user.name if booking.approver_user else 'N/A' }}<br>
+  <strong>Designation:</strong> {{ booking.designation }}<br>
+  <strong>Area:</strong> {{ booking.area }}<br>
+  <strong>Approval Date:</strong> {{ booking.approval_date }}
+</div>
+
+
+  <img src="data:image/png;base64,{{ qr_code }}" class="qr">
+</body>
+</html>

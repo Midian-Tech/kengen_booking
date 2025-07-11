@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4">Conference Booking Form</h3>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label>Function/Meeting</label>
+      <input type="text" name="function" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label>Date Range</label>
+      <div class="d-flex gap-2">
+        <input type="date" name="date_from" class="form-control" required>
+        <input type="date" name="date_to" class="form-control" required>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label>No. of Pax</label>
+      <input type="number" name="pax" class="form-control" required>
+    </div>
+
+   <!-- Select Room -->
+<div class="mb-3">
+  <label for="room">Select Conference Room</label>
+  <select name="room_id" id="room" class="form-control" required>
+    <option value="" disabled selected>Select a room</option>
+    {% for room in rooms %}
+      <option value="{{ room.id }}">{{ room.name }} (Capacity: {{ room.capacity }})</option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- Select Equipment -->
+<div class="mb-3">
+  <label for="equipment">Select Equipment</label>
+  <select name="equipment_id" id="equipment" class="form-control">
+    <option value="" disabled selected>Select equipment (optional)</option>
+    {% for item in equipment %}
+      <option value="{{ item.id }}">{{ item.name }} (Available: {{ item.quantity }})</option>
+    {% endfor %}
+  </select>
+</div>
+
+    <div class="mb-3">
+      <label>Nature of Meals</label><br>
+      {% for meal in ['Morning tea', '10 O’clock tea & Snacks', 'Lunch', '4 O’clock tea', 'Dinner', 'Conference Only'] %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="meals" value="{{ meal }}">
+        <label class="form-check-label">{{ meal }}</label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <h5>Account to Charge</h5>
+    <div class="mb-3">
+      <label>Cost Centre</label>
+      <input type="text" name="cost_centre" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label>Account to charge</label>
+      <input type="text" name="account" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label>Internal order/Activity</label>
+      <input type="text" name="internal_order" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label>Network</label>
+      <input type="text" name="network" class="form-control">
+    </div>
+
+    <h5>To be approved by:</h5>
+<div class="mb-3">
+  <label>Select Approver</label>
+  <select name="approver_id" class="form-control" required>
+    <option value="" disabled selected>Select an admin</option>
+    {% for admin in admins %}
+      <option value="{{ admin.id }}">{{ admin.name }} ({{ admin.email }})</option>
+    {% endfor %}
+  </select>
+</div>
+
+
+    <div class="mb-3">
+      <label>Designation</label>
+      <input type="text" name="designation" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label>Area</label>
+      <input type="text" name="area" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit Booking</button>
+  </form>
+</div>
+{% endblock %}

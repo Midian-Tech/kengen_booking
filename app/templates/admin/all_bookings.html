@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}All Bookings{% endblock %}
+
 {% block content %}
 <h2 class="mb-3">All Bookings</h2>
 
@@ -22,7 +23,15 @@
   <table class="table table-striped table-hover">
     <thead class="table-dark">
       <tr>
-        <th>#</th><th>User</th><th>Room</th><th>Equipment</th><th>Status</th><th>Start</th><th>End</th><th>Returned</th>
+        <th>#</th>
+        <th>User</th>
+        <th>Room</th>
+        <th>Equipment</th>
+        <th>Status</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Returned</th>
+        <th>Details</th>
       </tr>
     </thead>
     <tbody>
@@ -32,11 +41,80 @@
         <td>{{ b.user.name }}</td>
         <td>{{ b.room.name if b.room else '—' }}</td>
         <td>{{ b.equipment.name if b.equipment else '—' }}</td>
-        <td><span class="badge bg-{{ 'success' if b.status == 'Approved' else 'warning' if b.status=='Pending' else 'danger' }}">{{ b.status }}</span></td>
-        <td>{{ b.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
-        <td>{{ b.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <span class="badge bg-{{ 'success' if b.status == 'Approved' else 'warning' if b.status=='Pending' else 'danger' }}">
+            {{ b.status }}
+          </span>
+        </td>
+       <td>{{ b.date_from.strftime('%Y-%m-%d %H:%M') if b.date_from else '—' }}</td>
+<td>{{ b.date_to.strftime('%Y-%m-%d %H:%M') if b.date_to else '—' }}</td>
+
         <td>{{ 'Yes' if b.returned else 'No' }}</td>
+        <td>
+          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal{{ b.id }}">Details</button>
+        </td>
       </tr>
+
+      <!-- Modal -->
+      <div class="modal fade" id="detailsModal{{ b.id }}" tabindex="-1" aria-labelledby="detailsModalLabel{{ b.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="detailsModalLabel{{ b.id }}">Booking Details - #{{ b.id }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+     <div class="modal-body">
+  <h6>Booking Info</h6>
+  <p><strong>User:</strong> {{ b.user.name }}</p>
+  <p><strong>Function:</strong> {{ b.function or '—' }}</p>
+  <p><strong>Start:</strong> {{ b.date_from.strftime('%Y-%m-%d %H:%M') if b.date_from else '—' }}</p>
+  <p><strong>End:</strong> {{ b.date_to.strftime('%Y-%m-%d %H:%M') if b.date_to else '—' }}</p>
+  <p><strong>Pax:</strong> {{ b.pax or '—' }}</p>
+  <p><strong>Meals:</strong> {{ b.meals or '—' }}</p>
+
+  <!-- ... rest of modal unchanged -->
+</div>
+
+              <p><strong>Pax:</strong> {{ b.pax or '—' }}</p>
+              <p><strong>Meals:</strong> {{ b.meals or '—' }}</p>
+
+              <hr>
+              <h6>Venue & Equipment</h6>
+              <p><strong>Room:</strong> {{ b.room.name if b.room else '—' }}</p>
+              <p><strong>Equipment:</strong> {{ b.equipment.name if b.equipment else '—' }}</p>
+
+              <hr>
+              <h6>Accounting</h6>
+              <p><strong>Cost Centre:</strong> {{ b.cost_centre or '—' }}</p>
+              <p><strong>Account:</strong> {{ b.account_to_charge or '—' }}</p>
+              <p><strong>Internal Order:</strong> {{ b.internal_order or '—' }}</p>
+              <p><strong>Network:</strong> {{ b.network or '—' }}</p>
+
+              <hr>
+              <h6>Approval</h6>
+              <p><strong>Approver:</strong> {{ b.approver or '—' }}</p>
+              <p><strong>Designation:</strong> {{ b.designation or '—' }}</p>
+              <p><strong>Area:</strong> {{ b.area or '—' }}</p>
+              <p><strong>Approval Date:</strong> {{ b.approval_date.strftime('%Y-%m-%d') if b.approval_date else '—' }}</p>
+
+              <hr>
+              <h6>Status</h6>
+              <p><strong>Status:</strong> {{ b.status or '—' }}</p>
+              <p><strong>Returned:</strong> {{ 'Yes' if b.returned else 'No' }}</p>
+              <p><strong>Is Approved:</strong> {{ 'Yes' if b.is_approved else 'No' }}</p>
+
+              {% if b.signature_filename %}
+              <hr>
+              <h6>Signature</h6>
+              <img src="{{ url_for('static', filename='uploads/signatures/' ~ b.signature_filename) }}" alt="Signature" class="img-fluid" style="max-height: 150px;">
+              {% endif %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
       {% endfor %}
     </tbody>
   </table>
