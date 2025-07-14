@@ -15,14 +15,52 @@ bp = Blueprint('booking', __name__, url_prefix='/booking')
 @bp.route('/book-conference', methods=['GET', 'POST'])
 @login_required
 def book_conference():
+    rooms = Room.query.all()
+    equipment = Equipment.query.all()
+    admins = User.query.filter_by(role='admin').all()
+
     if request.method == 'POST':
+        room_id = request.form.get('room_id')
+        equipment_id = request.form.get('equipment_id')
+        date_from_str = request.form['date_from']
+        date_to_str = request.form['date_to']
+        date_from = datetime.strptime(date_from_str, "%Y-%m-%d").date()
+
+        # 1. Prevent booking if date_from is in the past
+        if date_from < datetime.utcnow().date():
+            flash('Booking date cannot be in the past.', 'danger')
+            return render_template('book_conference.html', rooms=rooms, equipment=equipment, admins=admins)
+
+        # 2. Require at least room or equipment
+        if not room_id and not equipment_id:
+            flash('Please select at least a room or equipment.', 'warning')
+            return render_template('book_conference.html', rooms=rooms, equipment=equipment, admins=admins)
+
+        # 3. Check availability
+        if room_id:
+            room = Room.query.get(room_id)
+            if room.status == 'Unavailable':
+                flash(f"Room '{room.name}' is currently unavailable.", 'danger')
+                return render_template('book_conference.html', rooms=rooms, equipment=equipment, admins=admins)
+        else:
+            room = None
+
+        if equipment_id:
+            item = Equipment.query.get(equipment_id)
+            if item.quantity < 1:
+                flash(f"Equipment '{item.name}' is out of stock.", 'danger')
+                return render_template('book_conference.html', rooms=rooms, equipment=equipment, admins=admins)
+        else:
+            item = None
+
+        # All checks passed, create booking
         booking = ConferenceBooking(
             function=request.form['function'],
             date_from=request.form['date_from'],
             date_to=request.form['date_to'],
             pax=request.form['pax'],
-            room_id=request.form['room_id'],  # selected room
-            equipment_id=request.form.get('equipment_id'),  # optional
+            room_id=room_id if room else None,
+            equipment_id=equipment_id if item else None,
             meals=','.join(request.form.getlist('meals')),
             cost_centre=request.form['cost_centre'],
             account_to_charge=request.form['account'],
@@ -30,22 +68,33 @@ def book_conference():
             network=request.form['network'],
             designation=request.form['designation'],
             area=request.form['area'],
-            approval_date = request.form.get('approval_date'),
+            approval_date=request.form.get('approval_date'),
             user_id=current_user.id,
-            approver_id=request.form['approver_id'],  # ✅ new: reference to User
+            approver_id=request.form['approver_id'],
             status='Pending'
         )
+
         db.session.add(booking)
         db.session.commit()
+
+        # Send email to approver
+        admin = User.query.get(booking.approver_id)
+        if admin and admin.email:
+            send_email(
+                subject="New Conference Booking Awaiting Approval",
+                recipients=[admin.email],
+                body=f"Dear {admin.name},\n\nA new conference booking (ID: {booking.id}) is awaiting your approval.\n\nPlease log in to review it.",
+                html=f"""
+                    <p>Dear {admin.name},</p>
+                    <p>A new <strong>conference booking</strong> (ID: <strong>{booking.id}</strong>) is awaiting your approval.</p>
+                    <p><a href="{url_for('admin.pending_bookings', _external=True)}">Click here</a> to review it.</p>
+                """
+            )
+
         flash('Booking submitted successfully. Awaiting approval.', 'success')
         return redirect(url_for('booking.my_bookings'))
 
-    rooms = Room.query.all()
-    equipment = Equipment.query.all()
-    admins = User.query.filter_by(role='admin').all()  # ✅ pass admins to form
     return render_template('book_conference.html', rooms=rooms, equipment=equipment, admins=admins)
-
-
 @bp.route('/my')
 @login_required
 def my_bookings():

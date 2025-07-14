@@ -5,6 +5,11 @@
 {% block content %}
 <div class="container mt-4">
   <h2 class="mb-4 text-primary">Approval History</h2>
+  <form method="GET" action="{{ url_for('admin.history') }}" class="mb-3 d-flex gap-2">
+  <input type="text" name="approver" placeholder="Search by approver name" class="form-control" value="{{ request.args.get('approver', '') }}">
+  <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
 
   <div class="table-responsive">
     <table class="table table-bordered table-striped table-hover align-middle">

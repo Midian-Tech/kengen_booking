@@ -25,6 +25,7 @@
       <tr>
         <th>#</th>
         <th>User</th>
+        <th>Staff No</th>
         <th>Room</th>
         <th>Equipment</th>
         <th>Status</th>
@@ -39,6 +40,7 @@
       <tr>
         <td>{{ b.id }}</td>
         <td>{{ b.user.name }}</td>
+        <td>{{ b.user.username or '—' }}</td>
         <td>{{ b.room.name if b.room else '—' }}</td>
         <td>{{ b.equipment.name if b.equipment else '—' }}</td>
         <td>
@@ -46,9 +48,8 @@
             {{ b.status }}
           </span>
         </td>
-       <td>{{ b.date_from.strftime('%Y-%m-%d %H:%M') if b.date_from else '—' }}</td>
-<td>{{ b.date_to.strftime('%Y-%m-%d %H:%M') if b.date_to else '—' }}</td>
-
+        <td>{{ b.date_from.strftime('%Y-%m-%d %H:%M') if b.date_from else '—' }}</td>
+        <td>{{ b.date_to.strftime('%Y-%m-%d %H:%M') if b.date_to else '—' }}</td>
         <td>{{ 'Yes' if b.returned else 'No' }}</td>
         <td>
           <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detailsModal{{ b.id }}">Details</button>
@@ -63,18 +64,14 @@
               <h5 class="modal-title" id="detailsModalLabel{{ b.id }}">Booking Details - #{{ b.id }}</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-     <div class="modal-body">
-  <h6>Booking Info</h6>
-  <p><strong>User:</strong> {{ b.user.name }}</p>
-  <p><strong>Function:</strong> {{ b.function or '—' }}</p>
-  <p><strong>Start:</strong> {{ b.date_from.strftime('%Y-%m-%d %H:%M') if b.date_from else '—' }}</p>
-  <p><strong>End:</strong> {{ b.date_to.strftime('%Y-%m-%d %H:%M') if b.date_to else '—' }}</p>
-  <p><strong>Pax:</strong> {{ b.pax or '—' }}</p>
-  <p><strong>Meals:</strong> {{ b.meals or '—' }}</p>
 
-  <!-- ... rest of modal unchanged -->
-</div>
-
+            <div class="modal-body">
+              <h6>Booking Info</h6>
+              <p><strong>User:</strong> {{ b.user.name }}</p>
+              <p><strong>Staff No:</strong> {{ b.user.username or '—' }}</p>
+              <p><strong>Function:</strong> {{ b.function or '—' }}</p>
+              <p><strong>Start:</strong> {{ b.date_from.strftime('%Y-%m-%d %H:%M') if b.date_from else '—' }}</p>
+              <p><strong>End:</strong> {{ b.date_to.strftime('%Y-%m-%d %H:%M') if b.date_to else '—' }}</p>
               <p><strong>Pax:</strong> {{ b.pax or '—' }}</p>
               <p><strong>Meals:</strong> {{ b.meals or '—' }}</p>
 
@@ -109,6 +106,7 @@
               <img src="{{ url_for('static', filename='uploads/signatures/' ~ b.signature_filename) }}" alt="Signature" class="img-fluid" style="max-height: 150px;">
               {% endif %}
             </div>
+
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>

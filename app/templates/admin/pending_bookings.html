@@ -13,6 +13,7 @@
             <th>ID</th>
             <th>Room</th>
             <th>Booked By</th>
+            <th>Staff No</th>
             <th>Date From</th>
             <th>Date To</th>
             <th>Purpose</th>
@@ -25,23 +26,84 @@
             <td>{{ booking.id }}</td>
             <td>{{ booking.room.name if booking.room else 'N/A' }}</td>
             <td>{{ booking.user.name if booking.user else 'N/A' }}</td>
-            <td>{{ booking.date_from.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>{{ booking.date_to.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>{{ booking.purpose }}</td>
-            <td class="d-flex gap-1">
+            <td>{{ booking.user.username if booking.user else 'N/A' }}</td>
+            <td>{{ booking.date_from.strftime('%Y-%m-%d %H:%M') if booking.date_from else '—' }}</td>
+            <td>{{ booking.date_to.strftime('%Y-%m-%d %H:%M') if booking.date_to else '—' }}</td>
+            <td>{{ booking.purpose or '—' }}</td>
+            <td class="d-flex flex-wrap gap-1">
               <form method="POST" action="{{ url_for('admin.approve_booking', booking_id=booking.id) }}">
                 <button type="submit" class="btn btn-success btn-sm">
                   <i class="bi bi-check2-circle"></i> Approve
                 </button>
               </form>
-
               <form method="POST" action="{{ url_for('admin.reject_booking', booking_id=booking.id) }}">
                 <button type="submit" class="btn btn-danger btn-sm">
                   <i class="bi bi-x-circle"></i> Reject
                 </button>
               </form>
+              <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#detailsModal{{ booking.id }}">
+                <i class="bi bi-info-circle"></i> Details
+              </button>
             </td>
           </tr>
+
+          <!-- Details Modal -->
+          <!-- Details Modal -->
+<div class="modal fade" id="detailsModal{{ booking.id }}" tabindex="-1" aria-labelledby="detailsModalLabel{{ booking.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailsModalLabel{{ booking.id }}">Booking Details - #{{ booking.id }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h6>Booking Info</h6>
+        <p><strong>Booked By:</strong> {{ booking.user.name if booking.user else '—' }}</p>
+        <p><strong>Staff No:</strong> {{ booking.user.username if booking.user else '—' }}</p>
+        <p><strong>Function/Meeting:</strong> {{ booking.function or '—' }}</p>
+        <p><strong>Pax:</strong> {{ booking.pax or '—' }}</p>
+        <p><strong>Meals:</strong> {{ booking.meals or '—' }}</p>
+
+        <hr>
+        <h6>Room & Equipment</h6>
+        <p><strong>Room:</strong> {{ booking.room.name if booking.room else '—' }}</p>
+        <p><strong>Equipment:</strong> {{ booking.equipment.name if booking.equipment else '—' }}</p>
+
+        <hr>
+        <h6>Date & Time</h6>
+        <p><strong>From:</strong> {{ booking.date_from.strftime('%Y-%m-%d %H:%M') if booking.date_from else '—' }}</p>
+        <p><strong>To:</strong> {{ booking.date_to.strftime('%Y-%m-%d %H:%M') if booking.date_to else '—' }}</p>
+
+        <hr>
+        <h6>Account to Charge</h6>
+        <p><strong>Cost Centre:</strong> {{ booking.cost_centre or '—' }}</p>
+        <p><strong>Account:</strong> {{ booking.account_to_charge or '—' }}</p>
+        <p><strong>Internal Order/Activity:</strong> {{ booking.internal_order or '—' }}</p>
+        <p><strong>Network:</strong> {{ booking.network or '—' }}</p>
+
+        <hr>
+        <h6>Approval Info</h6>
+        <p><strong>Approver:</strong> {{ booking.approver or '—' }}</p>
+        <p><strong>Designation:</strong> {{ booking.designation or '—' }}</p>
+        <p><strong>Area:</strong> {{ booking.area or '—' }}</p>
+        <p><strong>Status:</strong> 
+          <span class="badge 
+            {% if booking.status == 'Pending' %} bg-warning 
+            {% elif booking.status == 'Approved' %} bg-success 
+            {% elif booking.status == 'Rejected' %} bg-danger 
+            {% else %} bg-secondary 
+            {% endif %}">
+            {{ booking.status or '—' }}
+          </span>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
           {% endfor %}
         </tbody>
       </table>

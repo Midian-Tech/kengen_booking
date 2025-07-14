@@ -10,6 +10,7 @@
         <tr>
           <th>ID</th>
           <th>User</th>
+          <th>Staff No</th>
           <th>Room</th>
           <th>Equipment</th>
           <th>Status</th>
@@ -21,6 +22,7 @@
         <tr>
           <td>{{ booking.id }}</td>
           <td>{{ booking.user.name if booking.user else '—' }}</td>
+          <td>{{ booking.user.username if booking.user else '—' }}</td>
           <td>{{ booking.room.name if booking.room else '—' }}</td>
           <td>{{ booking.equipment.name if booking.equipment else '—' }}</td>
           <td>

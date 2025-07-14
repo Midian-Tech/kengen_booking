@@ -2,8 +2,12 @@ from datetime import datetime, timedelta
 from flask import Blueprint, flash, redirect, render_template, abort, request, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
-from app.models import ConferenceBooking, Notice, Room, Equipment
+from app.models import ConferenceBooking, Notice, Room, Equipment, User
 from app import db
+from app.utils.email import send_email
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -140,7 +144,6 @@ def approve_booking(booking_id):
         flash('Booking is not pending approval.', 'warning')
         return redirect(url_for('admin.pending_bookings'))
 
-    # Room approval logic
     if booking.room:
         if booking.room.status == 'Unavailable':
             flash(f"Cannot approve booking: Room '{booking.room.name}' is currently unavailable.", 'danger')
@@ -148,7 +151,6 @@ def approve_booking(booking_id):
         else:
             booking.room.status = 'Unavailable'
 
-    # Equipment approval logic
     elif booking.equipment:
         if booking.equipment.quantity < 1:
             flash(f"Cannot approve booking: Equipment '{booking.equipment.name}' is out of stock.", 'danger')
@@ -158,9 +160,20 @@ def approve_booking(booking_id):
 
     booking.status = 'Approved'
     booking.approver_id = current_user.id
-    booking.approval_date = datetime.utcnow()
+    booking.approval_date = datetime.now(ZoneInfo("Africa/Nairobi"))
 
     db.session.commit()
+
+    # ✅ Send approval email
+    user = booking.user
+    if user and user.email:
+        send_email(
+            subject="Booking Approved",
+            recipients=[user.email],
+            body=f"Hello {user.name},\n\nYour booking (ID: {booking.id}) has been approved.",
+            html=f"<p>Hello {user.name},</p><p>Your booking (ID: <b>{booking.id}</b>) has been <b>approved</b>.</p>"
+        )
+
     flash(f'Booking #{booking.id} approved and resources updated.', 'success')
     return redirect(url_for('admin.pending_bookings'))
 
@@ -277,24 +290,41 @@ def pending_bookings():
 def reject_booking(booking_id):
     booking = ConferenceBooking.query.get_or_404(booking_id)
 
-    # ✅ Ensure only the assigned approver (admin) can reject
     if current_user.role != 'admin' or booking.approver_id != current_user.id:
         abort(403)
 
     booking.status = 'Rejected'
     db.session.commit()
 
+    # ✅ Send rejection email
+    user = booking.user
+    if user and user.email:
+        send_email(
+            subject="Booking Rejected",
+            recipients=[user.email],
+            body=f"Hello {user.name},\n\nYour booking (ID: {booking.id}) has been rejected.",
+            html=f"<p>Hello {user.name},</p><p>Your booking (ID: <b>{booking.id}</b>) has been <b>rejected</b>.</p>"
+        )
+
     flash(f'Booking #{booking.id} has been rejected.', 'danger')
     return redirect(url_for('admin.pending_bookings'))
+
 @bp.route('/history')
 @login_required
 def history():
     if current_user.role != 'admin':
         abort(403)
 
-    bookings = ConferenceBooking.query \
-        .filter(ConferenceBooking.status == 'Approved') \
-        .order_by(ConferenceBooking.approval_date.desc()) \
-        .all()
+    approver_query = request.args.get('approver', '').strip()
+
+    query = ConferenceBooking.query.join(User, ConferenceBooking.approver_id == User.id)
+
+    query = query.filter(ConferenceBooking.approval_date.isnot(None))  # approved only
+
+    if approver_query:
+        query = query.filter(User.name.ilike(f"%{approver_query}%"))
+
+    bookings = query.order_by(ConferenceBooking.approval_date.desc()).all()
 
     return render_template('admin/history.html', bookings=bookings)
+

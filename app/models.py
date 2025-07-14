@@ -12,6 +12,8 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # 'admin' or 'staff'
+    designation = db.Column(db.String(100), nullable=True)
+
 
     # ✅ Remove redundant relationship declaration
     # bookings = db.relationship('ConferenceBooking', backref='user', lazy=True)  ❌ REMOVE
@@ -60,6 +62,8 @@ class ConferenceBooking(db.Model):
     returned = db.Column(db.Boolean, default=False)
     is_approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+
 
     # Foreign Keys
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

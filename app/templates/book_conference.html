@@ -35,27 +35,27 @@
       <input type="number" name="pax" class="form-control" required>
     </div>
 
-   <!-- Select Room -->
-<div class="mb-3">
-  <label for="room">Select Conference Room</label>
-  <select name="room_id" id="room" class="form-control" required>
-    <option value="" disabled selected>Select a room</option>
-    {% for room in rooms %}
-      <option value="{{ room.id }}">{{ room.name }} (Capacity: {{ room.capacity }})</option>
-    {% endfor %}
-  </select>
-</div>
+    <!-- Select Room -->
+    <div class="mb-3">
+      <label for="room">Conference Room</label>
+      <select name="room_id" id="room" class="form-control">
+        <option value="" selected>Select a room or leave empty if only booking equipment</option>
+        {% for room in rooms %}
+          <option value="{{ room.id }}">{{ room.name }} ---- ({{ room.status }})</option>
+        {% endfor %}
+      </select>
+    </div>
 
-<!-- Select Equipment -->
-<div class="mb-3">
-  <label for="equipment">Select Equipment</label>
-  <select name="equipment_id" id="equipment" class="form-control">
-    <option value="" disabled selected>Select equipment (optional)</option>
-    {% for item in equipment %}
-      <option value="{{ item.id }}">{{ item.name }} (Available: {{ item.quantity }})</option>
-    {% endfor %}
-  </select>
-</div>
+    <!-- Select Equipment -->
+    <div class="mb-3">
+      <label for="equipment">Equipment</label>
+      <select name="equipment_id" id="equipment" class="form-control">
+        <option value="" selected>Select equipment or leave empty if only booking a room</option>
+        {% for item in equipment %}
+          <option value="{{ item.id }}">{{ item.name }} (Available: {{ item.quantity }})</option>
+        {% endfor %}
+      </select>
+    </div>
 
     <div class="mb-3">
       <label>Nature of Meals</label><br>
@@ -86,21 +86,23 @@
     </div>
 
     <h5>To be approved by:</h5>
-<div class="mb-3">
-  <label>Select Approver</label>
-  <select name="approver_id" class="form-control" required>
-    <option value="" disabled selected>Select an admin</option>
-    {% for admin in admins %}
-      <option value="{{ admin.id }}">{{ admin.name }} ({{ admin.email }})</option>
-    {% endfor %}
-  </select>
-</div>
-
+    <div class="mb-3">
+      <label>Select Approver</label>
+      <select name="approver_id" class="form-control" id="approverSelect" required>
+        <option value="" disabled selected>Select an admin</option>
+        {% for admin in admins %}
+          <option value="{{ admin.id }}" data-designation="{{ admin.designation or '' }}">
+            {{ admin.name }} ({{ admin.email }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
     <div class="mb-3">
       <label>Designation</label>
-      <input type="text" name="designation" class="form-control">
+      <input type="text" name="designation" class="form-control" id="designation" readonly>
     </div>
+
     <div class="mb-3">
       <label>Area</label>
       <input type="text" name="area" class="form-control">
@@ -109,4 +111,20 @@
     <button type="submit" class="btn btn-primary">Submit Booking</button>
   </form>
 </div>
+
+<!-- ✅ Working JS for auto-filling designation -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const approverSelect = document.getElementById('approverSelect');
+    const designationInput = document.getElementById('designation');
+
+    if (approverSelect && designationInput) {
+      approverSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const designation = selectedOption.getAttribute('data-designation');
+        designationInput.value = designation || '';
+      });
+    }
+  });
+</script>
 {% endblock %}

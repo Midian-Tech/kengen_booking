@@ -32,21 +32,37 @@ def login():
 def register():
     if request.method == 'POST':
         name = request.form['name']
+        username = request.form['username']  # staff number input
         email = request.form['email']
         password = request.form['password']
 
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            flash("Email already registered.")
+        # Check if email or username already exists
+        existing_email = User.query.filter_by(email=email).first()
+        existing_username = User.query.filter_by(username=username).first()
+
+        if existing_email:
+            flash("Email already registered.", "danger")
+            return redirect(url_for('auth.register'))
+        
+        if existing_username:
+            flash("Staff number already in use.", "danger")
             return redirect(url_for('auth.register'))
 
-        user = User(name=name, email=email, password=password, role='staff')
+        user = User(
+            name=name,
+            username=username,
+            email=email,
+            password=password,
+            role='staff'
+        )
         db.session.add(user)
         db.session.commit()
-        flash("Account created. Please log in.")
+
+        flash("Account created. Please log in.", "success")
         return redirect(url_for('auth.login'))
 
     return render_template('register.html')
+
 @bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
